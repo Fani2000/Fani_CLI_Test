@@ -13,7 +13,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         if (!optionsBuilder.IsConfigured)
         {
-            var config = new ConfigurationBuilder()
+            var config = new ConfigurationBuilder(
+)
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
                 .Build();
