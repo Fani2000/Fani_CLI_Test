@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Events;
 
 namespace Fani_Assignment;
 
@@ -15,11 +16,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        
-        // Configure Serilog
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Error) // Override for database logs
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File("logs/loggerfile.txt", rollingInterval: RollingInterval.Day,
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         try
@@ -33,28 +35,7 @@ public class Program
                 
             }
 
-
             Log.Information("Application starting up...");
-
-            /*
-            var tableHelper = new TableHelper(10);
-
-            var records = CsvReaderHelper.LoadCsvData(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"));
-
-            if (records != null)
-                foreach (var record in records)
-                {
-                    tableHelper.AddRow(
-                        record.InvoiceNumber,
-                        record.InvoiceDate,
-                        record.Address,
-                        record.InvoiceTotalExVAT,
-                        record.Linedescription,
-                        record.InvoiceQuantity,
-                        record.UnitsellingpriceexVAT
-                    );
-                }
-                */
 
             ShowMenu(host);
 
@@ -75,6 +56,15 @@ public class Program
     private static void LoadCsvData(IServiceScope scope)
     {
         Console.Clear();
+        
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning) // Override for database logs
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File("logs/loggerfile.txt", rollingInterval: RollingInterval.Day,
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
+        
         Log.Information("Loading the csv info to the db...");
 
         var invoiceHeaderService = scope.ServiceProvider.GetRequiredService<IInvoiceHeaderService>();
@@ -83,65 +73,68 @@ public class Program
         var records =
             CsvReaderHelper.LoadCsvData(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"));
 
-        foreach (var record in records)
-        {
-            try
+        if (records != null)
+            foreach (var record in records)
             {
-                DateTime? invoiceDate = null;
-                if (DateTime.TryParse(record.InvoiceDate, out var parsedDate))
+                try
                 {
-                    invoiceDate = parsedDate;
+                    DateTime? invoiceDate = null;
+                    if (DateTime.TryParse(record.InvoiceDate, out var parsedDate))
+                    {
+                        invoiceDate = parsedDate;
+                    }
+
+                    double? invoiceTotal = null;
+                    if (double.TryParse(record.InvoiceTotalExVAT, NumberStyles.Any, CultureInfo.InvariantCulture,
+                            out var parsedInvoiceTotal))
+                    {
+                        invoiceTotal = parsedInvoiceTotal;
+                    }
+
+                    var invoiceHeader = new InvoiceHeader
+                    {
+                        InvoiceNumber = record.InvoiceNumber,
+                        InvoiceDate = invoiceDate,
+                        Address = record.Address,
+                        InvoiceTotal = invoiceTotal
+                    };
+
+                    var createdHeader = invoiceHeaderService.CreateAsync(invoiceHeader).Result;
+
+                    double? quantity = null;
+                    if (double.TryParse(record.InvoiceQuantity, NumberStyles.Any, CultureInfo.InvariantCulture,
+                            out var parsedQuantity))
+                    {
+                        quantity = parsedQuantity;
+                    }
+
+                    double? unitSellingPriceExVat = null;
+                    if (double.TryParse(record.UnitsellingpriceexVAT?.Replace(";", ""), NumberStyles.Any,
+                            CultureInfo.InvariantCulture,
+                            out var parsedUnitSellingPriceExVAT))
+                    {
+                        unitSellingPriceExVat = parsedUnitSellingPriceExVAT;
+                    }
+
+                    var invoiceLine = new InvoiceLine
+                    {
+                        InvoiceNumber = record.InvoiceNumber,
+                        Description = record.Linedescription,
+                        Quantity = quantity,
+                        UnitSellingPriceExVAT = unitSellingPriceExVat
+                    };
+
+                    var createdLine = invoiceLineService.CreateAsync(invoiceLine).Result;
+
+                    if (createdHeader != null && createdLine != null)
+                            Log.Information(
+                                $"Added InvoiceHeader ID: {createdHeader.InvoiceId}, InvoiceLine ID: {createdLine.LineId}");
                 }
-
-                double? invoiceTotal = null;
-                if (double.TryParse(record.InvoiceTotalExVAT, NumberStyles.Any, CultureInfo.InvariantCulture,
-                        out var parsedInvoiceTotal))
+                catch (Exception ex)
                 {
-                    invoiceTotal = parsedInvoiceTotal;
+                    Log.Error(ex, "Error adding invoice data to the database.");
                 }
-
-                var invoiceHeader = new InvoiceHeader
-                {
-                    InvoiceNumber = record.InvoiceNumber,
-                    InvoiceDate = invoiceDate,
-                    Address = record.Address,
-                    InvoiceTotal = invoiceTotal
-                };
-
-                var createdHeader = invoiceHeaderService.CreateAsync(invoiceHeader).Result;
-
-                double? quantity = null;
-                if (double.TryParse(record.InvoiceQuantity, NumberStyles.Any, CultureInfo.InvariantCulture,
-                        out var parsedQuantity))
-                {
-                    quantity = parsedQuantity;
-                }
-
-                double? unitSellingPriceExVAT = null;
-                if (double.TryParse(record.UnitsellingpriceexVAT.Replace(";", ""), NumberStyles.Any, CultureInfo.InvariantCulture,
-                        out var parsedUnitSellingPriceExVAT))
-                {
-                    unitSellingPriceExVAT = parsedUnitSellingPriceExVAT;
-                }
-
-                var invoiceLine = new InvoiceLine
-                {
-                    InvoiceNumber = record.InvoiceNumber,
-                    Description = record.Linedescription,
-                    Quantity = quantity,
-                    UnitSellingPriceExVAT = unitSellingPriceExVAT
-                };
-
-                var createdLine = invoiceLineService.CreateAsync(invoiceLine).Result;
-
-                Log.Information(
-                    $"Added InvoiceHeader ID: {createdHeader.InvoiceId}, InvoiceLine ID: {createdLine.LineId}");
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error adding invoice data to the database.");
-            }
-        }
     }
 
     private static void ShowInvoiceHeaders(IServiceScope scope)
@@ -164,7 +157,7 @@ public class Program
         tableHelper.DisplayInvoiceLines(lines);
                 
     }
-    
+
     private static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((context, config) =>
@@ -176,11 +169,10 @@ public class Program
                 var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseSqlServer(connectionString));
-                
+
                 services.AddScoped<IInvoiceHeaderService, InvoiceHeaderService>();
                 services.AddScoped<IInvoiceLineService, InvoiceLineService>();
-                
-            });
+            }).UseSerilog();
     
     private static void ShowMenu( IHost host)
     {

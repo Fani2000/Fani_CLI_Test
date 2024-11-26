@@ -23,11 +23,11 @@ public class TableHelper(int pageSize = 5)
         {
             var header = headers[i];
             table.AddRow(
-                header.InvoiceId.ToString(),
-                header.InvoiceNumber,
-                header.InvoiceDate?.ToString("yyyy-MM-dd") ?? "N/A",
-                header.Address ?? "N/A",
-                header.InvoiceTotal?.ToString("F2") ?? "N/A"
+                header?.InvoiceId.ToString()!,
+                header?.InvoiceNumber!,
+                header?.InvoiceDate?.ToString("yyyy-MM-dd") ?? "N/A",
+                header?.Address ?? "N/A",
+                header?.InvoiceTotal?.ToString("F2") ?? "N/A"
             );
         }
 
@@ -55,11 +55,11 @@ public class TableHelper(int pageSize = 5)
         {
             var line = lines[i];
             table.AddRow(
-                line.LineId.ToString(),
-                line.InvoiceNumber,
-                line.Description ?? "N/A",
-                line.Quantity?.ToString("F2") ?? "N/A",
-                line.UnitSellingPriceExVAT?.ToString("F2") ?? "N/A"
+                line?.LineId.ToString()!,
+                line?.InvoiceNumber!,
+                line?.Description ?? "N/A",
+                line?.Quantity?.ToString("F2") ?? "N/A",
+                line?.UnitSellingPriceExVAT?.ToString("F2") ?? "N/A"
             );
         }
 

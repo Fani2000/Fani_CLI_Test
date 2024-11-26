@@ -6,8 +6,8 @@ namespace Fani_Assignment;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public DbSet<InvoiceHeader?> InvoiceHeaders { get; set; }
-    public DbSet<InvoiceLine?> InvoiceLines { get; set; }
+    public DbSet<InvoiceHeader> InvoiceHeaders { get; set; }
+    public DbSet<InvoiceLine> InvoiceLines { get; set; }
         
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

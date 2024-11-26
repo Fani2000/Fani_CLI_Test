@@ -18,7 +18,7 @@ public class InvoiceHeaderService(ApplicationDbContext context) : IInvoiceHeader
 
     public async Task<InvoiceHeader?> CreateAsync(InvoiceHeader? invoiceHeader)
     {
-        context.InvoiceHeaders.Add(invoiceHeader);
+        context.InvoiceHeaders.Add(invoiceHeader!);
         await context.SaveChangesAsync();
         return invoiceHeader;
     }

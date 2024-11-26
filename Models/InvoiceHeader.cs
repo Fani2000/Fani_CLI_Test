@@ -11,12 +11,12 @@ public class InvoiceHeader
 
     [Required]
     [MaxLength(50)]
-    public string InvoiceNumber { get; set; }
+    public required string? InvoiceNumber { get; set; }
 
     public DateTime? InvoiceDate { get; set; }
 
     [MaxLength(50)]
-    public string Address { get; set; }
+    public string? Address { get; set; }
 
     public double? InvoiceTotal { get; set; }
 }

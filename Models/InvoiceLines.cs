@@ -9,9 +9,9 @@ public class InvoiceLine
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LineId { get; set; }
 
-    [Required] [MaxLength(50)] public string InvoiceNumber { get; set; }
+    [Required] [MaxLength(50)] public required string? InvoiceNumber { get; set; }
 
-    [MaxLength(100)] public string Description { get; set; }
+    [MaxLength(100)] public string? Description { get; set; }
 
     public double? Quantity { get; set; }
 

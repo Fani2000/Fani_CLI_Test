@@ -11,6 +11,13 @@ namespace Fani_Assignment.Services
             return await context.InvoiceLines.ToListAsync();
         }
 
+        public IEnumerable<InvoiceLine?> GetByInvoiceNumber(string invoiceNumber)
+        {
+            var invoices = context.InvoiceLines.Where(x => x.InvoiceNumber == invoiceNumber);
+            
+            return invoices.ToList();
+        }
+
         public async Task<InvoiceLine?> GetByIdAsync(int id)
         {
             return await context.InvoiceLines.FindAsync(id);
@@ -18,7 +25,7 @@ namespace Fani_Assignment.Services
 
         public async Task<InvoiceLine?> CreateAsync(InvoiceLine? invoiceLine)
         {
-            context.InvoiceLines.Add(invoiceLine);
+            context.InvoiceLines.Add(invoiceLine!);
             await context.SaveChangesAsync();
             return invoiceLine;
         }
