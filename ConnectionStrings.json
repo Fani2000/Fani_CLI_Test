@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=invoices;User Id=sa;Password=yourStrong(\\!)Password;Trusted_Connection=False;"
+  }
+}

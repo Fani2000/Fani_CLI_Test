@@ -1,35 +1,29 @@
 using System.Globalization;
+using System.Text.Json;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Fani_Assignment.Models;
 
 namespace Fani_Assignment.Helpers;
 
-public class CsvReaderHelper(TableHelper tableHelper)
+public static class CsvReaderHelper
 {
-    public void LoadCsvData(string filePath)
+    public static IEnumerable<InvoiceRecord>? LoadCsvData(string filePath)
     {
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = ",",
             HeaderValidated = null,
             MissingFieldFound = null,
-            PrepareHeaderForMatch = args => args.Header.Replace(" ", "").Replace(";", "")
+            PrepareHeaderForMatch = args => args.Header.Replace(" ", "").Replace(";", ""),
         };
 
         using var reader = new StreamReader(filePath);
         using var csv = new CsvReader(reader, config);
-        var records = csv.GetRecords<dynamic>();
-        foreach (var record in records)
-        {
-            tableHelper.AddRow(
-                record.InvoiceNumber, 
-                record.InvoiceDate, 
-                record.Address, 
-                record.InvoiceTotalExVAT, 
-                record.Linedescription, 
-                record.InvoiceQuantity,
-                record.UnitsellingpriceexVAT
-            );
-        }
+        var exelResults = csv.GetRecords<dynamic>();
+        
+        var records = JsonSerializer.Deserialize<List<InvoiceRecord>>(JsonSerializer.Serialize(exelResults));
+
+        return records;
     }
 }

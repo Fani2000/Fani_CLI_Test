@@ -1,4 +1,8 @@
 ﻿using Fani_Assignment.Helpers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace Fani_Assignment;
@@ -7,6 +11,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        
+        var host = CreateHostBuilder(args).Build();
+        
         // Configure Serilog
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
@@ -17,21 +24,50 @@ public class Program
 
         var tableHelper = new TableHelper(10);
 
-        var csvReaderHelper = new CsvReaderHelper(tableHelper);
-        csvReaderHelper.LoadCsvData(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv")); 
+        var records = CsvReaderHelper.LoadCsvData(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv")); ;
+        
+        //  TODO: Create InvoiceHeader + InvoiceLines models
+
+        // TODO: InvoiceHeader => Add to the db + Log and HandleException
+        
+        // TODO: InvoiceLine => Add to the db + Log and HandleException
+        
+        foreach (var record in records)
+        {
+            tableHelper.AddRow(
+                record.InvoiceNumber, 
+                record.InvoiceDate, 
+                record.Address, 
+                record.InvoiceTotalExVAT, 
+                record.Linedescription, 
+                record.InvoiceQuantity,
+                record.UnitsellingpriceexVAT
+            );
+        }
 
         ShowMenu(tableHelper);
 
         // Log with color for shutting down
-        Log.Information("[red][bold]Application shutting down...[/]");
+        Log.Information("Application shutting down...");
         Log.CloseAndFlush();
     }
 
+    private static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((hostingContext, config) =>
+            {
+                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            })
+            .ConfigureServices((context, services) =>
+            {
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")));
+            });
+    
     private static void ShowMenu(TableHelper tableHelper)
     {
         while (true)
         {
-            Console.Clear();
             Console.WriteLine("Main Menu");
             Console.WriteLine("1. Display Table");
             Console.WriteLine("2. Exit");
