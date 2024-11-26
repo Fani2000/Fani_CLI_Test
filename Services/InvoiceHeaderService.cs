@@ -18,9 +18,22 @@ public class InvoiceHeaderService(ApplicationDbContext context) : IInvoiceHeader
 
     public async Task<InvoiceHeader?> CreateAsync(InvoiceHeader? invoiceHeader)
     {
-        context.InvoiceHeaders.Add(invoiceHeader!);
-        await context.SaveChangesAsync();
-        return invoiceHeader;
+        if (invoiceHeader == null)
+        {
+            throw new ArgumentNullException(nameof(invoiceHeader));
+        }
+
+        bool exists = await context.InvoiceHeaders
+            .AnyAsync(ih => ih.InvoiceNumber == invoiceHeader.InvoiceNumber);
+
+        if (!exists)
+        {
+            context.InvoiceHeaders.Add(invoiceHeader);
+            await context.SaveChangesAsync();
+            return invoiceHeader;
+        }
+
+        return null;
     }
 
     public async Task<InvoiceHeader?> UpdateAsync(int id, InvoiceHeader invoiceHeader)

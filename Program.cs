@@ -53,6 +53,69 @@ public class Program
         }
     }
 
+    private static InvoiceHeader? AddInvoiceHeader(IServiceScope scope, InvoiceRecord record)
+    {
+        var invoiceHeaderService = scope.ServiceProvider.GetRequiredService<IInvoiceHeaderService>();
+
+        DateTime? invoiceDate = null;
+        if (DateTime.TryParse(record.InvoiceDate, out var parsedDate))
+        {
+            invoiceDate = parsedDate;
+        }
+
+        double? invoiceTotal = null;
+        if (double.TryParse(record.InvoiceTotalExVAT, NumberStyles.Any, CultureInfo.InvariantCulture,
+                out var parsedInvoiceTotal))
+        {
+            invoiceTotal = parsedInvoiceTotal;
+        }
+
+        var invoiceHeader = new InvoiceHeader
+        {
+            InvoiceNumber = record.InvoiceNumber,
+            InvoiceDate = invoiceDate,
+            Address = record.Address,
+            InvoiceTotal = invoiceTotal
+        };
+
+        var createdHeader = invoiceHeaderService.CreateAsync(invoiceHeader).Result;
+
+        return createdHeader;
+    }
+    
+    private static InvoiceLine? AddInvoiceLine(IServiceScope scope, InvoiceRecord record)
+    {
+        var invoiceLineService = scope.ServiceProvider.GetRequiredService<IInvoiceLineService>();
+        double? quantity = null;
+        if (double.TryParse(record.InvoiceQuantity, NumberStyles.Any, CultureInfo.InvariantCulture,
+                out var parsedQuantity))
+        {
+            quantity = parsedQuantity;
+        }
+
+        double? unitSellingPriceExVat = null;
+        if (double.TryParse(record.UnitsellingpriceexVAT?.Replace(";", ""), NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out var parsedUnitSellingPriceExVAT))
+        {
+            unitSellingPriceExVat = parsedUnitSellingPriceExVAT;
+        }
+
+        var invoiceLine = new InvoiceLine
+        {
+            InvoiceNumber = record.InvoiceNumber,
+            Description = record.Linedescription,
+            Quantity = quantity,
+            UnitSellingPriceExVAT = unitSellingPriceExVat
+        };
+
+        var createdLine = invoiceLineService.CreateAsync(invoiceLine).Result;
+
+        // TODO: Log the sum of quantities for each invoiceNumber 
+        
+        return createdLine;
+    }
+
     private static void LoadCsvData(IServiceScope scope)
     {
         Console.Clear();
@@ -67,8 +130,6 @@ public class Program
         
         Log.Information("Loading the csv info to the db...");
 
-        var invoiceHeaderService = scope.ServiceProvider.GetRequiredService<IInvoiceHeaderService>();
-        var invoiceLineService = scope.ServiceProvider.GetRequiredService<IInvoiceLineService>();
 
         var records =
             CsvReaderHelper.LoadCsvData(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.csv"));
@@ -78,53 +139,8 @@ public class Program
             {
                 try
                 {
-                    DateTime? invoiceDate = null;
-                    if (DateTime.TryParse(record.InvoiceDate, out var parsedDate))
-                    {
-                        invoiceDate = parsedDate;
-                    }
-
-                    double? invoiceTotal = null;
-                    if (double.TryParse(record.InvoiceTotalExVAT, NumberStyles.Any, CultureInfo.InvariantCulture,
-                            out var parsedInvoiceTotal))
-                    {
-                        invoiceTotal = parsedInvoiceTotal;
-                    }
-
-                    var invoiceHeader = new InvoiceHeader
-                    {
-                        InvoiceNumber = record.InvoiceNumber,
-                        InvoiceDate = invoiceDate,
-                        Address = record.Address,
-                        InvoiceTotal = invoiceTotal
-                    };
-
-                    var createdHeader = invoiceHeaderService.CreateAsync(invoiceHeader).Result;
-
-                    double? quantity = null;
-                    if (double.TryParse(record.InvoiceQuantity, NumberStyles.Any, CultureInfo.InvariantCulture,
-                            out var parsedQuantity))
-                    {
-                        quantity = parsedQuantity;
-                    }
-
-                    double? unitSellingPriceExVat = null;
-                    if (double.TryParse(record.UnitsellingpriceexVAT?.Replace(";", ""), NumberStyles.Any,
-                            CultureInfo.InvariantCulture,
-                            out var parsedUnitSellingPriceExVAT))
-                    {
-                        unitSellingPriceExVat = parsedUnitSellingPriceExVAT;
-                    }
-
-                    var invoiceLine = new InvoiceLine
-                    {
-                        InvoiceNumber = record.InvoiceNumber,
-                        Description = record.Linedescription,
-                        Quantity = quantity,
-                        UnitSellingPriceExVAT = unitSellingPriceExVat
-                    };
-
-                    var createdLine = invoiceLineService.CreateAsync(invoiceLine).Result;
+                    var createdHeader = AddInvoiceHeader(scope, record);
+                    var createdLine = AddInvoiceLine(scope, record);
 
                     if (createdHeader != null && createdLine != null)
                             Log.Information(
