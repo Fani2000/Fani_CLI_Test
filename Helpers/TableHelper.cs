@@ -32,9 +32,6 @@ public class TableHelper(int pageSize = 5)
         }
 
         AnsiConsole.Write(table);
-
-        // Pagination info
-        AnsiConsole.WriteLine($"Page {pageNumber}/{(int)System.Math.Ceiling((double)headers.Count / pageSize)}");
     }
 
     public void DisplayInvoiceLines(List<InvoiceLine?> lines, int pageNumber = 1)
@@ -64,8 +61,5 @@ public class TableHelper(int pageSize = 5)
         }
 
         AnsiConsole.Write(table);
-
-        // Pagination info
-        AnsiConsole.WriteLine($"Page {pageNumber}/{(int)System.Math.Ceiling((double)lines.Count / pageSize)}");
     }
 }

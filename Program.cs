@@ -88,16 +88,12 @@ public class Program
                 Console.Clear();
                 using var scope = host.Services.CreateScope();
                 ShowInvoiceHeaders(scope);
-                Console.WriteLine("Press any key to return to the menu...");
-                Console.ReadKey();
             }
             else if (input == "3")
             {
                 Console.Clear();
                 using var scope = host.Services.CreateScope();
                 ShowInvoiceLines(scope);
-                Console.WriteLine("Press any key to return to the menu...");
-                Console.ReadKey();
             }
             else if (input == "4")
             {
@@ -115,22 +111,76 @@ public class Program
 
     private static void ShowInvoiceHeaders(IServiceScope scope)
     {
-        Console.Clear();
         Log.Information("Here is a list of all InvoiceHeaders");
-        var tableHelper = new TableHelper(10);
         var invoiceHeaderService = scope.ServiceProvider.GetRequiredService<IInvoiceHeaderService>();
         var headers = invoiceHeaderService.GetAllAsync().Result.ToList();
-        tableHelper.DisplayInvoiceHeaders(headers);
+
+        int currentPage = 0;
+        const int pageSize = 10;
+
+        while (true)
+        {
+            Console.Clear();
+            Log.Information("Here is a list of InvoiceHeaders (Page {0})", currentPage + 1);
+            var tableHelper = new TableHelper(pageSize);
+
+            var paginatedHeaders = headers.Skip(currentPage * pageSize).Take(pageSize).ToList();
+            tableHelper.DisplayInvoiceHeaders(paginatedHeaders);
+
+            Console.WriteLine($"\nPage {currentPage + 1}/{(headers.Count - 1) / pageSize + 1}");
+            Console.WriteLine("N: Next Page, P: Previous Page, Q: Quit");
+
+            var input = Console.ReadKey(true).Key;
+            if (input == ConsoleKey.N && (currentPage + 1) * pageSize < headers.Count)
+            {
+                currentPage++;
+            }
+            else if (input == ConsoleKey.P && currentPage > 0)
+            {
+                currentPage--;
+            }
+            else if (input == ConsoleKey.Q)
+            {
+                break;
+            }
+        }
     }
 
     private static void ShowInvoiceLines(IServiceScope scope)
     {
-        Console.Clear();
         Log.Information("Here is a list of all InvoiceLines");
-        var tableHelper = new TableHelper(10);
         var invoiceLineService = scope.ServiceProvider.GetRequiredService<IInvoiceLineService>();
         var lines = invoiceLineService.GetAllAsync().Result.ToList();
-        tableHelper.DisplayInvoiceLines(lines);
+
+        int currentPage = 0;
+        const int pageSize = 10;
+
+        while (true)
+        {
+            Console.Clear();
+            Log.Information("Here is a list of InvoiceLines (Page {0})", currentPage + 1);
+            var tableHelper = new TableHelper(pageSize);
+
+            var paginatedLines = lines.Skip(currentPage * pageSize).Take(pageSize).ToList();
+            tableHelper.DisplayInvoiceLines(paginatedLines);
+
+            Console.WriteLine($"\nPage {currentPage + 1}/{(lines.Count - 1) / pageSize + 1}");
+            Console.WriteLine("N: Next Page, P: Previous Page, Q: Quit");
+
+            var input = Console.ReadKey(true).Key;
+            if (input == ConsoleKey.N && (currentPage + 1) * pageSize < lines.Count)
+            {
+                currentPage++;
+            }
+            else if (input == ConsoleKey.P && currentPage > 0)
+            {
+                currentPage--;
+            }
+            else if (input == ConsoleKey.Q)
+            {
+                break;
+            }
+        }
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
