@@ -48,9 +48,10 @@ This project aims to create a C# console application that imports data from a CS
 
 To understand the data flow better, refer to the following diagram:
 
+
 ```mermaid
 graph TD
-    A[Source (CSV File)] --> B[Data Processing]
+    A[CSV File] --> B[Data Processing]
     B -->|Read and Parse CSV| C[InvoiceRecord]
     C -->|Map and Validate| D[Exception Handling]
     C -->|Map and Validate| E[Logging]
