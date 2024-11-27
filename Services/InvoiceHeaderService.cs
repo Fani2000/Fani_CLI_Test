@@ -18,7 +18,7 @@ public class InvoiceHeaderService(ApplicationDbContext context) : IInvoiceHeader
 
     public async Task<InvoiceHeader?> CreateAsync(InvoiceHeader? invoiceHeader)
     {
-        if (invoiceHeader == null)
+        if (invoiceHeader == null || invoiceHeader.InvoiceNumber == null)
         {
             throw new ArgumentNullException(nameof(invoiceHeader));
         }
