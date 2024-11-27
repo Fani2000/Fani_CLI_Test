@@ -17,6 +17,10 @@ This project aims to create a C# console application that imports data from a CS
        -d \
        mcr.microsoft.com/mssql/server:2022-latest
     ```
+   
+ ```bash
+   dotnet ef database update
+ ```
 
 3. Draft Solution 
     ![image](https://github.com/user-attachments/assets/76c7f49a-b42a-4979-8b76-18aaf2d358a6)
