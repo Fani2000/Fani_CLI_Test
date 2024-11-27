@@ -15,7 +15,7 @@ This project aims to create a C# console application that imports data from a CS
        -e "MSSQL_PID=Developer" \
        -p 1433:1433 --name invoiceserver --hostname invoiceserver \
        -d \
-       mcr.microsoft.com/mssql/server:2022-latest
+       mcr.microsoft.com/mssql/server
     ```
    
  ```bash
